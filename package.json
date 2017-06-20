@@ -1,6 +1,6 @@
 {
   "name": "cif-parser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Parsing xray CIF files",
   "main": "./src/index.js",
   "files": [
