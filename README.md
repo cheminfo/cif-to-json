@@ -1,6 +1,5 @@
 # cif-parser
 
-
 [![NPM version][npm-image]][npm-url]
 [![build status][ci-image]][ci-url]
 [![npm download][download-image]][download-url]
@@ -15,9 +14,30 @@ Parse CIF files.
 ## Example
 
 ```js
-const cifParser = require('cif-parser');
+import { cifParser } from "cif-parser";
+
+result = cifParser(cifString);
 ```
 
+The `result` will be an object in which
+
+- the loops (`loop_`) are lists of objects. The main loop `_atom_site` might look like
+
+```json
+ {
+          _atom_site_label: 'In1',
+          _atom_site_type_symbol: 'In',
+          _atom_site_fract_x: '0.30475(3)',
+          _atom_site_fract_y: '0.21073(1)',
+          _atom_site_fract_z: '0.21076(2)'
+        },
+```
+
+- all headers are in the output with the orignal tag, from the CIF, e.g.,
+
+```json
+_cell_volume: '2999.477',
+```
 
 ## License
 
