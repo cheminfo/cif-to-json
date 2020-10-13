@@ -1,6 +1,6 @@
 {
   "name": "cif-to-json",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Parsing xray CIF (Crystallographic Information File)",
   "main": "lib/index.js",
   "module": "src/index.js",
