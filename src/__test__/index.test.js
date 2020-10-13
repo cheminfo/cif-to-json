@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 import { cifParser } from '..';
 
-describe('cif-parser test', function () {
+describe('cif-to-json test', function () {
   let cif = readFileSync(`${__dirname}/test.cif`).toString();
   let parsed = cifParser(cif);
   it('Test some fields', function () {

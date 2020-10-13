@@ -1,21 +1,21 @@
-# cif-parser
+# cif-to-json
 
 [![NPM version][npm-image]][npm-url]
 [![build status][ci-image]][ci-url]
 [![npm download][download-image]][download-url]
 
-Parse CIF files.
+Parse CIF (Crystallographic Information File) files.
 
 ## Installation
 
-`$ npm install cif-parser`
+`$ npm install cif-to-json`
 
-## [API Documentation](https://cheminfo.github.io/cif-parser/)
+## [API Documentation](https://cheminfo.github.io/cif-to-json/)
 
 ## Example
 
 ```js
-import { cifParser } from 'cif-parser';
+import { cifParser } from 'cif-to-json';
 
 result = cifParser(cifString);
 ```
@@ -46,9 +46,9 @@ The `result` will be an object in which
 
 [MIT](./LICENSE)
 
-[npm-image]: https://img.shields.io/npm/v/cif-parser.svg
-[npm-url]: https://www.npmjs.com/package/cif-parser
-[ci-image]: https://github.com/cheminfo/cif-parser/workflows/Node.js%20CI/badge.svg?branch=master
-[ci-url]: https://github.com/cheminfo/cif-parser/actions?query=workflow%3A%22Node.js+CI%22
-[download-image]: https://img.shields.io/npm/dm/cif-parser.svg
-[download-url]: https://www.npmjs.com/package/cif-parser
+[npm-image]: https://img.shields.io/npm/v/cif-to-json.svg
+[npm-url]: https://www.npmjs.com/package/cif-to-json
+[ci-image]: https://github.com/cheminfo/cif-to-json/workflows/Node.js%20CI/badge.svg?branch=master
+[ci-url]: https://github.com/cheminfo/cif-to-json/actions?query=workflow%3A%22Node.js+CI%22
+[download-image]: https://img.shields.io/npm/dm/cif-to-json.svg
+[download-url]: https://www.npmjs.com/package/cif-to-json
