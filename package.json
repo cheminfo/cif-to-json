@@ -8,7 +8,7 @@
     "src"
   ],
   "scripts": {
-    "build": "cheminfo-build  --entry src/index.js --root CIF",
+    "build": "cheminfo-build --entry src/index.js --root CIF",
     "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
     "prepublishOnly": "rollup -c",
@@ -40,6 +40,7 @@
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.10.4",
     "@types/jest": "^26.0.14",
+    "cheminfo-build": "^1.1.7",
     "cheminfo-publish": "^1.0.19",
     "codecov": "^3.8.0",
     "eslint": "^7.11.0",
