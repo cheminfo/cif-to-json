@@ -6,7 +6,7 @@
   [![David deps][david-image]][david-url]
   [![npm download][download-image]][download-url]
   
-Parsing xray CIF files
+Parse CIF files.
 
 ## Installation
 

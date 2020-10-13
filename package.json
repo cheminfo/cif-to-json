@@ -7,13 +7,14 @@
     "src"
   ],
   "scripts": {
-    "eslint": "eslint src test",
+    "build": "cheminfo-build  --entry src/index.js --root CIF",
+    "build-doc": "cheminfo doc",
+    "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
-    "test": "npm run test-mocha && npm run eslint",
-    "test-cov": "istanbul cover node_modules/.bin/_mocha -- --require should --reporter dot --recursive",
-    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- --require should --reporter dot --recursive",
-    "test-mocha": "mocha --require should --reporter mocha-better-spec-reporter",
-    "build": "cheminfo build"
+    "prepublishOnly": "rollup -c",
+    "test": "npm run test-coverage && npm run eslint",
+    "test-coverage": "jest --coverage",
+    "test-only": "jest"
   },
   "repository": {
     "type": "git",
@@ -26,14 +27,22 @@
     "url": "https://github.com/cheminfo-js/cif-parser/issues"
   },
   "homepage": "https://github.com/cheminfo-js/cif-parser#readme",
+  "jest": {
+    "testEnvironment": "node"
+  },
   "devDependencies": {
-    "cheminfo-tools": "^1.11.0",
-    "eslint": "^3.12.2",
-    "eslint-config-cheminfo": "^1.6.0",
-    "eslint-plugin-no-only-tests": "^1.1.0",
-    "istanbul": "^0.4.5",
-    "mocha": "^3.2.0",
-    "mocha-better-spec-reporter": "^3.1.0",
-    "should": "^11.1.2"
+    "@babel/plugin-transform-modules-commonjs": "^7.10.4",
+    "@types/jest": "^26.0.14",
+    "cheminfo-publish": "^1.0.19",
+    "codecov": "^3.8.0",
+    "eslint-config-cheminfo": "^5.2.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.1.2",
+    "rollup": "^2.29.0"
+  },
+  "dependencies": {
+    "jest": "^26.5.3"
   }
 }
