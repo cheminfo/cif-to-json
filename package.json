@@ -2,13 +2,13 @@
   "name": "cif-parser",
   "version": "1.0.1",
   "description": "Parsing xray CIF files",
-  "main": "./src/index.js",
+  "main": "lib/index.js",
+  "module": "src/index.js",
   "files": [
     "src"
   ],
   "scripts": {
     "build": "cheminfo-build  --entry src/index.js --root CIF",
-    "build-doc": "cheminfo doc",
     "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
     "prepublishOnly": "rollup -c",
