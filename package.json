@@ -1,7 +1,7 @@
 {
   "name": "cif-to-json",
   "version": "1.0.0",
-  "description": "Parsing xray CIF (Crystallographic Information File)",
+  "description": "Parsing CIF (Crystallographic Information File)",
   "main": "lib/index.js",
   "module": "src/index.js",
   "files": [
@@ -27,7 +27,12 @@
     "type": "git",
     "url": "https://github.com/cheminfo-js/cif-to-json.git"
   },
-  "keywords": [],
+  "keywords": [
+    "chemistry",
+    "CIF",
+    "crystallography",
+    "parser"
+  ],
   "author": "Luc Patiny <luc@patiny.com>",
   "license": "MIT",
   "bugs": {
@@ -51,5 +56,21 @@
     "jest": "^26.6.3",
     "prettier": "^2.3.0",
     "rollup": "^2.47.0"
+  },
+  "info": {
+    "logo": "https://raw.githubusercontent.com/cheminfo/font/master/src/misc/cristal.svg",
+    "domain": [
+      "Physical Chemistry",
+      "Materials Science"
+    ],
+    "functionality": {
+      "fileTypes": [
+        {
+          "extension": "cif",
+          "manufacturer": "IUCr",
+          "example": "https://raw.githubusercontent.com/cheminfo/cif-to-json/master/src/__test__/test.cif"
+        }
+      ]
+    }
   }
 }
