@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.0.1](https://www.github.com/cheminfo/cif-to-json/compare/v1.0.0...v1.0.1) (2021-05-11)
+
+
+### Bug Fixes
+
+* workflow was release isoterm-analysis ([d40d7b3](https://www.github.com/cheminfo/cif-to-json/commit/d40d7b349dc2116542092196e9a545372e41bc73))
+
 ## 1.0.0 (2020-10-13)
 
 
