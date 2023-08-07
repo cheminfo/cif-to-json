@@ -48,7 +48,7 @@ The `result` will be an object in which
 
 [npm-image]: https://img.shields.io/npm/v/cif-to-json.svg
 [npm-url]: https://www.npmjs.com/package/cif-to-json
-[ci-image]: https://github.com/cheminfo/cif-to-json/workflows/Node.js%20CI/badge.svg?branch=master
+[ci-image]: https://github.com/cheminfo/cif-to-json/workflows/Node.js%20CI/badge.svg?branch=main
 [ci-url]: https://github.com/cheminfo/cif-to-json/actions?query=workflow%3A%22Node.js+CI%22
 [download-image]: https://img.shields.io/npm/dm/cif-to-json.svg
 [download-url]: https://www.npmjs.com/package/cif-to-json
