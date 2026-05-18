@@ -1,125 +1,201 @@
 /**
  * Parse a CIF (Crystallographic Information File) string into a JSON object.
- * @param {string} value - CIF file content as a string.
- * @returns {object} Parsed CIF data.
+ * Supports single-quoted, double-quoted, and semicolon-delimited text fields.
+ * Handles both classic crystallographic CIF and mmCIF / CCD format (dotted tags
+ * like `_chem_comp_atom.atom_id`).
+ * @param {string} input - CIF file content as a string.
+ * @returns {object} Parsed CIF data. Scalar fields are top-level keys; loop
+ *   sections become arrays keyed on the common tag prefix (trailing `_` or `.`
+ *   stripped). Each array row uses the full tag name as its property key.
  */
-export function cifParser(value) {
-  let lines = value.split(/[\r\n]+/);
-  let result = {};
-  let newLines = [];
-  let inLoopHeader = false;
+export function cifParser(input) {
+  return buildJson(tokenize(input));
+}
 
-  for (let line of lines) {
-    if (line.match(/^ *#/)) {
-      // a comment
-    } else if (line.match(/^ *loop_/)) {
-      inLoopHeader = true;
-      newLines[newLines.length] = line.trim();
-    } else if (line.match(/^ *_/)) {
-      if (inLoopHeader) {
-        newLines[newLines.length - 1] += ` ${line.trim()}`;
+/**
+ * Tokenize CIF content into a flat array of typed tokens.
+ * @param {string} input - Raw CIF text to tokenize.
+ * @returns {Array<{type: 'data'|'loop'|'tag'|'value', value?: string|null}>} Flat token stream.
+ */
+function tokenize(input) {
+  const tokens = [];
+  const lines = input.split(/\r?\n/);
+
+  let inSemicolon = false;
+  let semicolonLines = [];
+
+  for (const rawLine of lines) {
+    // --- Semicolon-delimited text block ---
+    if (inSemicolon) {
+      if (rawLine.startsWith(';')) {
+        // Closing semicolon: emit the accumulated text
+        tokens.push({ type: 'value', value: semicolonLines.join('\n') });
+        inSemicolon = false;
+        semicolonLines = [];
       } else {
-        newLines[newLines.length] = line.trim();
+        semicolonLines.push(rawLine);
       }
-    } else {
-      if (inLoopHeader) {
-        inLoopHeader = false;
+      continue;
+    }
+
+    const line = rawLine.trimEnd();
+
+    if (!line.trim()) continue;
+    if (line.trimStart().startsWith('#')) continue;
+
+    // Opening semicolon (must be the very first character of the line)
+    if (line.startsWith(';')) {
+      inSemicolon = true;
+      // Text may start on the same line as the opening semicolon;
+      // if the semicolon is alone on its line the remainder is empty — skip it.
+      const afterSemi = line.slice(1);
+      semicolonLines = afterSemi ? [afterSemi] : [];
+      continue;
+    }
+
+    // Inline tokenization
+    let i = 0;
+    while (i < line.length) {
+      // Skip whitespace
+      while (i < line.length && (line[i] === ' ' || line[i] === '\t')) i++;
+      if (i >= line.length) break;
+
+      const ch = line[i];
+
+      // Inline comment
+      if (ch === '#') break;
+
+      // Quoted string (single or double)
+      if (ch === '"' || ch === "'") {
+        const closeIdx = line.indexOf(ch, i + 1);
+        if (closeIdx === -1) {
+          // Unclosed quote — consume rest of line
+          tokens.push({ type: 'value', value: line.slice(i + 1) });
+          break;
+        }
+        tokens.push({ type: 'value', value: line.slice(i + 1, closeIdx) });
+        i = closeIdx + 1;
+        continue;
       }
-      if (line.match(/^ *;/)) {
-        newLines[newLines.length - 1] += ` ${line.replace(';', "'").trim()}`;
+
+      // Unquoted token — read until whitespace or comment
+      let end = i;
+      while (
+        end < line.length &&
+        line[end] !== ' ' &&
+        line[end] !== '\t' &&
+        line[end] !== '#'
+      ) {
+        end++;
+      }
+      const token = line.slice(i, end);
+      i = end;
+
+      if (/^loop_$/i.test(token)) {
+        tokens.push({ type: 'loop' });
+      } else if (token.startsWith('data_')) {
+        tokens.push({ type: 'data', value: token.slice(5) });
+      } else if (token.startsWith('_')) {
+        tokens.push({ type: 'tag', value: token });
+      } else if (token === '.' || token === '?') {
+        // CIF missing / unknown value → empty string (backward-compatible)
+        tokens.push({ type: 'value', value: '' });
       } else {
-        newLines[newLines.length - 1] += ` ${line.trim()}`;
+        tokens.push({ type: 'value', value: token });
       }
     }
   }
 
-  for (let i = 0; i < newLines.length; i++) {
-    let line = `${newLines[i]} `;
-    let begin = 0;
-    let inQuote = false;
-    let escaped = false;
-    let fields = [];
-    for (let j = 0; j < line.length; j++) {
-      let char = line.charAt(j);
-      if (char === ' ' || char === '\t') {
-        if (!inQuote) {
-          if (begin < j) {
-            fields.push(line.slice(begin, j));
-          }
-          begin = j + 1;
-        }
-      } else if (char === "'" && !escaped) {
-        if (inQuote) {
-          // the end of the Quote
-          fields.push(line.slice(begin, j));
-          inQuote = false;
-        } else {
-          inQuote = true;
-        }
-        begin = j + 1;
-      }
-      if (char === '\\') {
-        escaped = true;
-      } else {
-        escaped = false;
-      }
+  // Unclosed semicolon block (malformed CIF) — emit what we have
+  if (inSemicolon && semicolonLines.length > 0) {
+    tokens.push({ type: 'value', value: semicolonLines.join('\n') });
+  }
+
+  return tokens;
+}
+
+/**
+ * Build a plain JSON object from the token stream.
+ * @param {Array<{type: string, value?: string|null}>} tokens - Flat token stream from {@link tokenize}.
+ * @returns {object} Parsed CIF data as a plain object.
+ */
+function buildJson(tokens) {
+  const result = {};
+  let i = 0;
+
+  while (i < tokens.length) {
+    const token = tokens[i];
+
+    // data_ header — skip (block name is not surfaced as a key)
+    if (token.type === 'data') {
+      i++;
+      continue;
     }
-    processFields(fields, result);
+
+    if (token.type === 'loop') {
+      i++;
+
+      // Collect column headers
+      const headers = [];
+      while (i < tokens.length && tokens[i].type === 'tag') {
+        headers.push(tokens[i].value);
+        i++;
+      }
+
+      if (headers.length === 0) continue;
+
+      // Determine the shared prefix, stripping a trailing `_` or `.`
+      const common = getCommonBeginning(headers).replace(/[_.]$/, '');
+
+      // Collect data rows
+      const rows = [];
+      while (i < tokens.length && tokens[i].type === 'value') {
+        const row = {};
+        for (let h = 0; h < headers.length; h++) {
+          if (i >= tokens.length || tokens[i].type !== 'value') break;
+          row[headers[h]] = tokens[i].value;
+          i++;
+        }
+        if (Object.keys(row).length === headers.length) {
+          rows.push(row);
+        }
+      }
+
+      result[common] = rows;
+      continue;
+    }
+
+    if (token.type === 'tag') {
+      const tag = token.value;
+      i++;
+      if (i < tokens.length && tokens[i].type === 'value') {
+        result[tag] = tokens[i].value;
+        i++;
+      }
+      continue;
+    }
+
+    // Stray value token (should not happen in well-formed CIF)
+    i++;
   }
 
   return result;
 }
 
-function processFields(fields, result) {
-  if (fields[0] === 'loop_') {
-    // it is an array of object
-    let headers = [];
-    let lines = [];
-    let i = 1;
-    while (i < fields.length) {
-      if (fields[i].match(/^_/)) {
-        headers.push(fields[i]);
-      } else {
-        break;
-      }
-      i++;
-    }
-
-    let common = getCommonBeginning(headers).replace(/_$/, '');
-    let line = {};
-    while (i < fields.length) {
-      let pos = (i - 1) % headers.length;
-      if (pos === 0) {
-        line = {};
-      }
-      line[headers[pos]] = fields[i];
-      if (pos === headers.length - 1) {
-        lines.push(line);
-      }
-      i++;
-    }
-    result[common] = lines;
-  } else {
-    result[fields[0]] = fields[1] ? unescapeValue(fields[1].trim()) : fields[1];
-  }
-}
-
-function unescapeValue(value) {
-  return value.replaceAll(String.raw`\'e`, 'Ã©');
-}
-
+/**
+ * Return the longest common prefix shared by all strings.
+ * @param {string[]} strings - Array of strings to compare.
+ * @returns {string} Longest common prefix.
+ */
 function getCommonBeginning(strings) {
+  if (strings.length === 0) return '';
   let common = '';
-  let currentPosition = 0;
-  while (currentPosition < strings[0].length) {
-    let currentChar = strings[0].charAt(currentPosition);
-    for (let i = 1; i < strings.length; i++) {
-      if (strings[i].charAt(currentPosition) !== currentChar) {
-        return common;
-      }
+  for (let pos = 0; pos < strings[0].length; pos++) {
+    const ch = strings[0][pos];
+    for (let k = 1; k < strings.length; k++) {
+      if (strings[k][pos] !== ch) return common;
     }
-    common += currentChar;
-    currentPosition++;
+    common += ch;
   }
   return common;
 }
