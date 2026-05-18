@@ -40,6 +40,8 @@ jspm_packages
 .node_repl_history
 
 lib
+.claude
+coverage
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode,vim
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,visualstudiocode,vim
