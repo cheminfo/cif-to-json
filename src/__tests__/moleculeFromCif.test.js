@@ -1,12 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import OCL from 'openchemlib';
+import { Molecule } from 'openchemlib';
 import { expect, test } from 'vitest';
 
 import { moleculeFromCif } from '../moleculeFromCif.js';
-
-const { Molecule } = OCL;
 
 test('parses ala.cif fixture and returns correct code and name', () => {
   const cifText = readFileSync(join(import.meta.dirname, 'ala.cif'), 'utf8');

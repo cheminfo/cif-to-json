@@ -42,11 +42,11 @@ export function moleculeFromCifJson(json, Molecule) {
   const atomRows = /** @type {Array<Record<string,string>>} */ (
     json._chem_comp_atom ?? []
   );
+  if (atomRows.length < 2) return null;
+
   const bondRows = /** @type {Array<Record<string,string>>} */ (
     json._chem_comp_bond ?? []
   );
-
-  if (atomRows.length < 2) return null;
 
   const code =
     json['_chem_comp.id'] ?? json['_chem_comp.three_letter_code'] ?? '';
@@ -55,7 +55,9 @@ export function moleculeFromCifJson(json, Molecule) {
   const formula = json['_chem_comp.formula'] ?? '';
 
   const molecule = new Molecule(atomRows.length, bondRows.length);
-  /** @type {Map<string, number>} */
+  /**
+   * @type {Map<string, number>}
+   */
   const atomIndex = new Map();
 
   for (const row of atomRows) {
@@ -77,13 +79,12 @@ export function moleculeFromCifJson(json, Molecule) {
     const yModel = get(row, '_chem_comp_atom.model_Cartn_y');
     const zModel = get(row, '_chem_comp_atom.model_Cartn_z');
 
-    molecule.setAtomX(i, Number.parseFloat(xIdeal || xModel || '0'));
-    molecule.setAtomY(i, Number.parseFloat(yIdeal || yModel || '0'));
-    molecule.setAtomZ(i, Number.parseFloat(zIdeal || zModel || '0'));
+    molecule.setAtomX(i, Number(xIdeal || xModel || '0'));
+    molecule.setAtomY(i, Number(yIdeal || yModel || '0'));
+    molecule.setAtomZ(i, Number(zIdeal || zModel || '0'));
 
-    const charge = Number.parseInt(
-      get(row, '_chem_comp_atom.charge') || '0',
-      10,
+    const charge = Math.trunc(
+      Number(get(row, '_chem_comp_atom.charge') || '0'),
     );
     if (charge) molecule.setAtomCharge(i, charge);
 
@@ -99,11 +100,11 @@ export function moleculeFromCifJson(json, Molecule) {
     const b = atomIndex.get(atom2);
     if (a === undefined || b === undefined) return null;
 
-    const bondIdx = molecule.addBond(a, b);
+    const bondIndex = molecule.addBond(a, b);
     const order = (
       get(row, '_chem_comp_bond.value_order') || 'SING'
     ).toUpperCase();
-    molecule.setBondType(bondIdx, bondTypeConstant(order, Molecule));
+    molecule.setBondType(bondIndex, bondTypeConstant(order, Molecule));
   }
 
   return { molecule, code, name, type, formula, nbAtoms: atomRows.length };

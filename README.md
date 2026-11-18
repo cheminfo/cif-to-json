@@ -17,8 +17,13 @@ Parse CIF (Crystallographic Information File) files.
 ```js
 import { cifParser } from 'cif-to-json';
 
-result = cifParser(cifString);
+const result = cifParser(cifString);
 ```
+
+Values are read by the CIF 1.1 rules: a quoted value ends only at a quote
+followed by whitespace, so `'O'Daniel, H'` reads as `O'Daniel, H`, and a `#`
+opens a comment only where a value could start, so `C#N` stays one value. The
+missing-value markers `.` and `?` become empty strings.
 
 The `result` will be an object in which
 
@@ -40,6 +45,21 @@ The `result` will be an object in which
 {
   _cell_volume: '2999.477';
 }
+```
+
+### Chemical components
+
+`moleculeFromCif(cifText, Molecule)` builds an OpenChemLib molecule from one
+block of the wwPDB Chemical Component Dictionary, with its ideal coordinates,
+so the stereochemistry is in the molecule's ID code. `moleculeFromCifJson`
+does the same from the output of `cifParser`. Both return `null` for an entry
+that is not a small molecule. `openchemlib` is an optional peer dependency.
+
+```js
+import { Molecule } from 'openchemlib';
+import { moleculeFromCif } from 'cif-to-json';
+
+const { molecule, code, name, formula } = moleculeFromCif(cifText, Molecule);
 ```
 
 ## License

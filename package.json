@@ -11,10 +11,10 @@
   ],
   "scripts": {
     "build": "cheminfo-build --entry src/index.js --root CIF",
-    "eslint": "eslint src",
-    "eslint-fix": "eslint src --fix",
-    "prettier": "prettier --check src",
-    "prettier-write": "prettier --write src",
+    "eslint": "eslint .",
+    "eslint-fix": "eslint . --fix",
+    "prettier": "prettier --check .",
+    "prettier-write": "prettier --write .",
     "test": "npm run test-only && npm run eslint && npm run prettier",
     "test-only": "vitest run --coverage"
   },
@@ -43,13 +43,13 @@
     }
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.6",
-    "cheminfo-build": "^1.3.2",
-    "eslint": "^9.39.4",
-    "eslint-config-cheminfo": "^18.0.0",
-    "openchemlib": "^9.22.1",
-    "prettier": "^3.8.3",
-    "vitest": "^4.1.6"
+    "@vitest/coverage-v8": "^5.1.1",
+    "cheminfo-build": "^1.4.0",
+    "eslint": "^10.15.0",
+    "eslint-config-cheminfo": "^19.5.1",
+    "openchemlib": "^9.26.0",
+    "prettier": "^3.10.1",
+    "vitest": "^5.1.1"
   },
   "info": {
     "logo": "https://raw.githubusercontent.com/cheminfo/font/master/src/misc/cristal.svg",

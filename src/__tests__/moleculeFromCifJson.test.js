@@ -1,10 +1,8 @@
 /* eslint-disable camelcase -- CIF tag names use underscore-dot notation, not camelCase */
-import OCL from 'openchemlib';
+import { Molecule } from 'openchemlib';
 import { expect, test } from 'vitest';
 
 import { moleculeFromCifJson } from '../moleculeFromCifJson.js';
-
-const { Molecule } = OCL;
 
 /**
  * Minimal JSON representation of an ALA block as produced by cifParser.
