@@ -1,8 +1,9 @@
 /* eslint-disable camelcase -- CIF tag names use underscore-dot notation, not camelCase */
+import { FifoLogger } from 'fifo-logger';
 import { Molecule } from 'openchemlib';
 import { expect, test } from 'vitest';
 
-import { moleculeFromCifJson } from '../moleculeFromCifJson.js';
+import { moleculeFromCifJson } from '../moleculeFromCifJson.ts';
 
 /**
  * Minimal JSON representation of an ALA block as produced by cifParser.
@@ -140,11 +141,11 @@ test('ALA: returns correct code, name, type, formula, and nbAtoms', () => {
   const result = moleculeFromCifJson(ALA_JSON, Molecule);
 
   expect(result).not.toBeNull();
-  expect(result.code).toBe('ALA');
-  expect(result.name).toBe('ALANINE');
-  expect(result.type).toBe('L-PEPTIDE LINKING');
-  expect(result.formula).toBe('C3 H7 N O2');
-  expect(result.nbAtoms).toBe(6);
+  expect(result?.code).toBe('ALA');
+  expect(result?.name).toBe('ALANINE');
+  expect(result?.type).toBe('L-PEPTIDE LINKING');
+  expect(result?.formula).toBe('C3 H7 N O2');
+  expect(result?.nbAtoms).toBe(6);
 });
 
 test('ALA: idCode encodes S (L-alanine) stereochemistry from 3D coordinates', () => {
@@ -157,7 +158,7 @@ test('ALA: idCode encodes S (L-alanine) stereochemistry from 3D coordinates', ()
   const rAla = Molecule.fromSmiles('N[C@H](C)C(=O)O');
 
   expect(sAla.getIDCode()).not.toBe(rAla.getIDCode());
-  expect(result.molecule.getIDCode()).toBe(sAla.getIDCode());
+  expect(result?.molecule.getIDCode()).toBe(sAla.getIDCode());
 });
 
 test('ALA: R-alanine coordinates produce D-alanine (R-config) idCode', () => {
@@ -176,5 +177,33 @@ test('ALA: R-alanine coordinates produce D-alanine (R-config) idCode', () => {
 
   const rAla = Molecule.fromSmiles('N[C@H](C)C(=O)O');
 
-  expect(result.molecule.getIDCode()).toBe(rAla.getIDCode());
+  expect(result?.molecule.getIDCode()).toBe(rAla.getIDCode());
+});
+
+test('the logger says why an entry gave no molecule', () => {
+  const logger = new FifoLogger();
+  const json = {
+    '_chem_comp.id': 'XX',
+    _chem_comp_atom: [
+      { '_chem_comp_atom.atom_id': 'X1', '_chem_comp_atom.type_symbol': 'Xx' },
+      { '_chem_comp_atom.atom_id': 'X2', '_chem_comp_atom.type_symbol': 'C' },
+    ],
+  };
+
+  expect(moleculeFromCifJson(json, Molecule, { logger })).toBeNull();
+  expect(
+    moleculeFromCifJson({ '_chem_comp.id': 'NA' }, Molecule, { logger }),
+  ).toBeNull();
+  expect(
+    logger
+      .getLogs()
+      .map(({ levelLabel, message }) => ({ levelLabel, message })),
+  ).toStrictEqual([
+    {
+      levelLabel: 'warn',
+      message:
+        'XX: atom "X1" has no known element ("Xx"); no molecule was built.',
+    },
+    { levelLabel: 'info', message: 'NA lists 0 atoms; no molecule was built.' },
+  ]);
 });

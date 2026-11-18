@@ -3,7 +3,8 @@ import { join } from 'node:path';
 
 import { expect, test } from 'vitest';
 
-import { cifParser } from '../cifParser.js';
+import { cifParser, parseCifBlocks } from '../cifParser.ts';
+import type { CifRow } from '../types.ts';
 
 const cif = readFileSync(join(import.meta.dirname, 'test.cif')).toString();
 const parsed = cifParser(cif);
@@ -61,10 +62,11 @@ _chem_comp_atom.type_symbol
  CA C
 `;
   const result = cifParser(cif);
+  const atoms = result._chem_comp_atom as CifRow[];
 
-  expect(result._chem_comp_atom).toHaveLength(2);
-  expect(result._chem_comp_atom[0]['_chem_comp_atom.atom_id']).toBe('N');
-  expect(result._chem_comp_atom[1]['_chem_comp_atom.type_symbol']).toBe('C');
+  expect(atoms).toHaveLength(2);
+  expect(atoms[0]?.['_chem_comp_atom.atom_id']).toBe('N');
+  expect(atoms[1]?.['_chem_comp_atom.type_symbol']).toBe('C');
 });
 
 test('missing-value markers . and ? become empty strings', () => {
@@ -106,7 +108,8 @@ _publ_author_name
 `;
   const result = cifParser(cif);
 
-  const names = result._publ_author_name.map((row) => row._publ_author_name);
+  const rows = result._publ_author_name as CifRow[];
+  const names = rows.map((row) => row._publ_author_name);
 
   expect(names).toStrictEqual([
     "O'Daniel, H",
@@ -154,7 +157,10 @@ _a
 DATA_second
 _b 3
 `;
-  const result = cifParser(cif);
+  const blocks = parseCifBlocks(cif);
 
-  expect(result).toStrictEqual({ _a: [{ _a: '1' }, { _a: '2' }], _b: '3' });
+  expect(blocks).toStrictEqual([
+    { name: '', data: { _a: [{ _a: '1' }, { _a: '2' }] } },
+    { name: 'second', data: { _b: '3' } },
+  ]);
 });

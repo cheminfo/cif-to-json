@@ -20,31 +20,54 @@ import { cifParser } from 'cif-to-json';
 const result = cifParser(cifString);
 ```
 
+`cifParser` reads the file's first data block. Each loop (`loop_`) is an array
+of rows under the prefix its tags share, every row keyed on the full tags. The
+main loop `_atom_site` holds rows such as:
+
+```js
+const row = {
+  _atom_site_label: 'In1',
+  _atom_site_type_symbol: 'In',
+  _atom_site_fract_x: '0.30475(3)',
+  _atom_site_fract_y: '0.21073(1)',
+  _atom_site_fract_z: '0.21076(2)',
+};
+```
+
+Every other tag is a key of its own, with its value as a string:
+`result._cell_volume` is `'2999.477'`.
+
 Values are read by the CIF 1.1 rules: a quoted value ends only at a quote
 followed by whitespace, so `'O'Daniel, H'` reads as `O'Daniel, H`, and a `#`
 opens a comment only where a value could start, so `C#N` stays one value. The
 missing-value markers `.` and `?` become empty strings.
 
-The `result` will be an object in which
+### Several data blocks
 
-- the loops (`loop_`) are lists of objects. The main loop `_atom_site` might look like
+`parseCifBlocks` reads every block, each apart:
 
-```javascript
- {
-  _atom_site_label: 'In1',
-  _atom_site_type_symbol: 'In',
-  _atom_site_fract_x: '0.30475(3)',
-  _atom_site_fract_y: '0.21073(1)',
-  _atom_site_fract_z: '0.21076(2)'
-},
+```js
+import { parseCifBlocks } from 'cif-to-json';
+
+for (const { name, data } of parseCifBlocks(cifString)) {
+  console.log(name, data._cell_volume);
+}
 ```
 
-- all headers are in the output with the original tag, from the CIF, e.g.,
+### What the parser had to drop
 
-```javascript
-{
-  _cell_volume: '2999.477';
-}
+Both functions take a `logger`, any `LightLogger` from `cheminfo-types`
+(`console`, a `FifoLogger`). It hears, with the line each comes from, what was
+dropped (a loop row cut short, a tag with no value) as an error, and what
+changes how the result reads (a file with several blocks, an unclosed quote, a
+repeated tag, a save frame) as a warning.
+
+```js
+import { FifoLogger } from 'fifo-logger';
+
+const logger = new FifoLogger();
+const result = cifParser(cifString, { logger });
+console.log(logger.getLogs());
 ```
 
 ### Chemical components
@@ -52,14 +75,19 @@ The `result` will be an object in which
 `moleculeFromCif(cifText, Molecule)` builds an OpenChemLib molecule from one
 block of the wwPDB Chemical Component Dictionary, with its ideal coordinates,
 so the stereochemistry is in the molecule's ID code. `moleculeFromCifJson`
-does the same from the output of `cifParser`. Both return `null` for an entry
-that is not a small molecule. `openchemlib` is an optional peer dependency.
+does the same from one parsed block, so every entry of `components.cif` is
+read with `parseCifBlocks`. Both return `null` for an entry that is not a small
+molecule, and say why to the `logger` of their third argument. `openchemlib` is
+an optional peer dependency.
 
 ```js
 import { Molecule } from 'openchemlib';
-import { moleculeFromCif } from 'cif-to-json';
+import { moleculeFromCifJson, parseCifBlocks } from 'cif-to-json';
 
-const { molecule, code, name, formula } = moleculeFromCif(cifText, Molecule);
+for (const { data } of parseCifBlocks(componentsCif)) {
+  const component = moleculeFromCifJson(data, Molecule);
+  if (component) console.log(component.code, component.molecule.getIDCode());
+}
 ```
 
 ## License
