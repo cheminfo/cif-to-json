@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/cheminfo/cif-to-json/compare/v2.0.0...v2.1.0) (2026-11-18)
+
+
+### Features
+
+* migrate to TypeScript, read data blocks apart and log what is dropped ([1810105](https://github.com/cheminfo/cif-to-json/commit/1810105f1b3e2fcd20e86d871a1bda8b5cef4f89))
+
+
+### Bug Fixes
+
+* close a quoted value only at a quote followed by whitespace ([fb698e4](https://github.com/cheminfo/cif-to-json/commit/fb698e4c56e3a9f58437ad119a9d2c75c0a16d73))
+
 ## [2.0.0](https://github.com/cheminfo/cif-to-json/compare/v1.0.1...v2.0.0) (2026-05-18)
 
 
