@@ -21,16 +21,16 @@ function tokenize(input) {
   const tokens = [];
   const lines = input.split(/\r?\n/);
 
-  let inSemicolon = false;
+  let isInSemicolon = false;
   let semicolonLines = [];
 
   for (const rawLine of lines) {
     // --- Semicolon-delimited text block ---
-    if (inSemicolon) {
+    if (isInSemicolon) {
       if (rawLine.startsWith(';')) {
         // Closing semicolon: emit the accumulated text
         tokens.push({ type: 'value', value: semicolonLines.join('\n') });
-        inSemicolon = false;
+        isInSemicolon = false;
         semicolonLines = [];
       } else {
         semicolonLines.push(rawLine);
@@ -40,12 +40,11 @@ function tokenize(input) {
 
     const line = rawLine.trimEnd();
 
-    if (!line.trim()) continue;
-    if (line.trimStart().startsWith('#')) continue;
+    if (!line.trim() || line.trimStart().startsWith('#')) continue;
 
     // Opening semicolon (must be the very first character of the line)
     if (line.startsWith(';')) {
-      inSemicolon = true;
+      isInSemicolon = true;
       // Text may start on the same line as the opening semicolon;
       // if the semicolon is alone on its line the remainder is empty — skip it.
       const afterSemi = line.slice(1);
@@ -67,25 +66,21 @@ function tokenize(input) {
 
       // Quoted string (single or double)
       if (ch === '"' || ch === "'") {
-        const closeIdx = line.indexOf(ch, i + 1);
-        if (closeIdx === -1) {
+        const closeIndex = closingQuote(line, i);
+        if (closeIndex === -1) {
           // Unclosed quote — consume rest of line
           tokens.push({ type: 'value', value: line.slice(i + 1) });
           break;
         }
-        tokens.push({ type: 'value', value: line.slice(i + 1, closeIdx) });
-        i = closeIdx + 1;
+        tokens.push({ type: 'value', value: line.slice(i + 1, closeIndex) });
+        i = closeIndex + 1;
         continue;
       }
 
-      // Unquoted token — read until whitespace or comment
+      // Unquoted token — read until whitespace: a `#` opens a comment only
+      // where a token starts, so `C#N` is one value.
       let end = i;
-      while (
-        end < line.length &&
-        line[end] !== ' ' &&
-        line[end] !== '\t' &&
-        line[end] !== '#'
-      ) {
+      while (end < line.length && line[end] !== ' ' && line[end] !== '\t') {
         end++;
       }
       const token = line.slice(i, end);
@@ -93,7 +88,7 @@ function tokenize(input) {
 
       if (/^loop_$/i.test(token)) {
         tokens.push({ type: 'loop' });
-      } else if (token.startsWith('data_')) {
+      } else if (/^data_/i.test(token)) {
         tokens.push({ type: 'data', value: token.slice(5) });
       } else if (token.startsWith('_')) {
         tokens.push({ type: 'tag', value: token });
@@ -107,11 +102,29 @@ function tokenize(input) {
   }
 
   // Unclosed semicolon block (malformed CIF) — emit what we have
-  if (inSemicolon && semicolonLines.length > 0) {
+  if (isInSemicolon && semicolonLines.length > 0) {
     tokens.push({ type: 'value', value: semicolonLines.join('\n') });
   }
 
   return tokens;
+}
+
+/**
+ * Find where a quoted value ends. By the CIF 1.1 rule, a quote closes the value
+ * only when whitespace or the end of the line follows it, so `'O'Daniel, H'`
+ * and `'Bour\'ee, F.'` are one value each.
+ * @param {string} line - The line being read, without trailing whitespace.
+ * @param {number} start - Index of the opening quote.
+ * @returns {number} Index of the closing quote, or -1 when the value is unclosed.
+ */
+function closingQuote(line, start) {
+  const quote = line[start];
+  for (let index = start + 1; index < line.length; index++) {
+    if (line[index] !== quote) continue;
+    const next = line[index + 1];
+    if (next === undefined || ' \t'.includes(next)) return index;
+  }
+  return -1;
 }
 
 /**
